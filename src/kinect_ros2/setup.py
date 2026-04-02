@@ -30,6 +30,10 @@ setup(
             'kinect_driver = kinect_ros2.kinect_driver_node:main',
             'depth_alert = kinect_ros2.depth_alert_node:main',
             'tilt_control = kinect_ros2.tilt_control_node:main',
+
+		# ── Example nodes (v2, new) ─────────────────────────
+	    'ex01_rgb_viewer = kinect_ros2.examples.ex01_rgb_viewer.rgb_viewer_node:main',
+
         ],
     },
 )
