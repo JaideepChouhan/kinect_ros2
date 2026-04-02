@@ -1,0 +1,31 @@
+kinect_driver_node:
+  ros__parameters:
+    device_index:         0
+    target_fps:           30.0
+    rgb_frame_id:         "camera_rgb_optical_frame"
+    depth_frame_id:       "camera_depth_optical_frame"
+    publish_rgb:          true
+    publish_depth:        true
+    publish_point_cloud:  false
+    depth_calib_c1:   -0.0030711016
+    depth_calib_c2:    3.3309495161
+    rgb_fx: 525.0
+    rgb_fy: 525.0
+    rgb_cx: 319.5
+    rgb_cy: 239.5
+    depth_fx: 580.0
+    depth_fy: 580.0
+    depth_cx: 319.5
+    depth_cy: 239.5
+
+depth_alert_node:
+  ros__parameters:
+    danger_distance_m:    0.80
+    warning_distance_m:   1.50
+    min_valid_distance_m: 0.10
+    alert_topic:          "/kinect/proximity_alert"
+    roi_fraction:         0.5
+
+tilt_control_node:
+  ros__parameters:
+    publish_rate_hz: 5.0

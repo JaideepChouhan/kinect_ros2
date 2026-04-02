@@ -1,0 +1,23 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Displays:
+    - Class: rviz_default_plugins/Image
+      Name: RGB Image
+      Topic: /camera/rgb/image_raw
+      Transport Hint: raw
+    - Class: rviz_default_plugins/Image
+      Name: Depth Image
+      Topic: /camera/depth/image_meters
+      Transport Hint: raw
+      Min Value: 0.4
+      Max Value: 3.0
+      Color Map: jet
+  Global Options:
+    Fixed Frame: camera_rgb_optical_frame
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
