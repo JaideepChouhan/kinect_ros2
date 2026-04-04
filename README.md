@@ -4,12 +4,100 @@
 [![ROS2](https://img.shields.io/badge/ROS2-Jazzy-orange)](https://docs.ros.org/en/jazzy)
 [![Ubuntu](https://img.shields.io/badge/Ubuntu-24.04_LTS-red)](https://ubuntu.com/)
 [![Python](https://img.shields.io/badge/Python-3.12-green)](https://python.org)
+[![Version](https://img.shields.io/badge/Version-2.0.0-brightgreen)](https://github.com/kinect_ros2)
 
-A complete, production-ready ROS 2 Jazzy driver ecosystem for the Microsoft Kinect v1 (Xbox 360) sensor, engineered on the foundation of the OpenKinect `libfreenect` library. This package exposes a comprehensive, native ROS 2 middleware layer for optical sensor acquisition (RGB and depth modalities), camera calibration parameters, inertial measurement unit (IMU) telemetry, motor control interfaces, and real-time proximity analysis with configurable spatial reasoning.
+A complete, production-ready ROS 2 Jazzy driver ecosystem for the Microsoft Kinect v1 (Xbox 360) sensor, engineered on the foundation of the OpenKinect `libfreenect` library. **Version 2.0** transforms the package from a pure driver into a learning and prototyping platform with six ready-to-run example nodes, a clean context-manager API, launch files, and integrated test suite.
+
+## What's New in Version 2.0
+
+| Feature | v1 | v2 |
+| :--- | :--- | :--- |
+| RGB & Depth Topics | ✅ | ✅ |
+| Point Cloud (XYZ) | ✅ | ✅ |
+| Colourised Point Cloud (XYZRGB) | ❌ | ✅ **NEW** |
+| Depth Histogram Visualizer | ❌ | ✅ **NEW** |
+| Hand/Blob Proximity Detector | ❌ | ✅ **NEW** |
+| Obstacle Avoidance Publisher | ❌ | ✅ **NEW** |
+| Context-Manager Device API (`KinectDevice`) | ❌ | ✅ **NEW** |
+| Six Example Nodes | ❌ | ✅ **NEW** |
+| Automated Test Suite (pytest) | ❌ | ✅ **NEW** |
+| Per-Example Launch Files | ❌ | ✅ **NEW** |
+| All-Examples-in-One Launch | ❌ | ✅ **NEW** |
+
+**Key Improvements:**
+- **Clean API:** New `KinectDevice` context manager wraps libfreenect for easier direct hardware access
+- **Example-Driven Learning:** Six fully-documented example nodes covering image annotation, distance measurement, histograms, hand detection, sensor fusion, and obstacle avoidance
+- **Shared Parameters:** Centralized `examples_params.yaml` for consistent configuration across all examples
+- **Launch Orchestration:** `kinect_all_examples.launch.py` starts all nodes with staggered timing to avoid CPU spikes
+- **Testing:** Unit and integration tests validate core functionality
+
+## Core Changes in Version 2
+
+### New: KinectDevice Context Manager
+
+**Location:** `kinect_ros2/kinect_device.py`
+
+A Python context manager that wraps libfreenect synchronous calls for safer hardware access. Handles device initialization, LED control, tilt motor, and cleanup.
+
+**Key Methods:**
+- `__enter__() / __exit__()` – Sets LED color, safely closes device
+- `get_video()` → `(RGB frame, timestamp)` – Raw RGB data
+- `get_depth()` → `(raw disparity, timestamp)` – 11-bit disparity
+- `get_depth_meters()` → `(float32 depth in meters, timestamp)` – Metric depth
+- `get_accel()` → `(ax, ay, az) in g` – Accelerometer telemetry
+- `set_tilt(degrees)` – Tilt motor control (clamped to [-31, 31])
+
+**Usage Example:**
+```python
+from kinect_ros2.kinect_device import KinectDevice
+
+with KinectDevice(device_index=0, led_color='green') as dev:
+    rgb, _ = dev.get_video()
+    depth_m, _ = dev.get_depth_meters()
+    dev.set_tilt(10.0)
+```
+
+**Important:** In v2, only the driver node (`kinect_driver_node`) should use `KinectDevice`. All example nodes subscribe to driver topics instead of accessing hardware directly – this avoids `LIBUSB_ERROR_BUSY`.
+
+### Enhanced: depth_utils.py
+
+Expanded utility module for depth conversion and processing:
+
+**Key Functions:**
+- `raw_to_meters(raw, c1, c2)` – Converts uint16 disparity to metres
+- `make_camera_info_dict(...)` – Builds CameraInfo message fields
+- `nearest_in_roi(depth_m, roi_fraction, min_valid)` – Finds closest object in ROI
+
+**Constants (Kinect v1):**
+```python
+DEFAULT_C1 = -0.0030711016
+DEFAULT_C2 = 3.3309495161
+DEPTH_MIN_M = 0.40
+DEPTH_MAX_M = 5.00
+```
+
+### Updated: setup.py Entry Points
+
+The corrected `setup.py` (v2.0.0) now includes all six example nodes:
+
+```python
+entry_points={
+    'console_scripts': [
+        'kinect_driver = kinect_ros2.kinect_driver_node:main',
+        'depth_alert = kinect_ros2.depth_alert_node:main',
+        'tilt_control = kinect_ros2.tilt_control_node:main',
+        # v2 Examples
+        'ex01_rgb_viewer = kinect_ros2.examples.ex01_rgb_viewer.rgb_viewer_node:main',
+        'ex02_depth_ruler = kinect_ros2.examples.ex02_depth_ruler.depth_ruler_node:main',
+        'ex03_depth_histogram = kinect_ros2.examples.ex03_depth_histogram.depth_histogram_node:main',
+        'ex04_hand_detector = kinect_ros2.examples.ex04_hand_detector.hand_detector_node:main',
+        'ex05_coloured_cloud = kinect_ros2.examples.ex05_coloured_cloud.coloured_cloud_node:main',
+        'ex06_obstacle_avoidance = kinect_ros2.examples.ex06_obstacle_avoidance.obstacle_avoidance_node:main',
+    ],
+},
+```
 
 ## Overview & Architecture
-
-The `kinect_ros2` package uses a distributed, multi-node architecture pattern to decompose Kinect sensor acquisition into specialized, orthogonal responsibilities:
 
 **Core Design Principles:**
 - **Modular Node Design:** Each functional subsystem (optical acquisition, motor control, analysis) operates as an independent ROS 2 node with well-defined subscriptions, publications, and parameter contracts.
@@ -25,6 +113,144 @@ The `kinect_ros2` package uses a distributed, multi-node architecture pattern to
 - **Spatial Analysis Engine:** Region-of-interest (ROI) computation for depth-based proximity classification with hysteretic alert states.
 - **Downstream Format Conversion:** Optional conversion pipeline to laser scan format for compatibility with legacy 2D navigation stacks (`depthimage_to_laserscan` integration).
 - **Calibration Support:** Per-camera intrinsic parameters (focal length, principal point, distortion coefficients) published as standard `sensor_msgs/CameraInfo` messages.
+
+## The Six Example Nodes (v2)
+
+All example nodes **subscribe to topics** published by the camera driver (`kinect_driver_node`). They do not access the USB device directly – this design avoids `LIBUSB_ERROR_BUSY` conflicts and allows multiple nodes to run concurrently.
+
+### Example 01 – RGB Viewer (subscriber version)
+
+**File:** `examples/ex01_rgb_viewer/rgb_viewer_node.py`
+
+Subscribes to `/camera/rgb/image_raw`, adds FPS counter and timestamp overlay, and publishes annotated frames.
+
+**Publishes:**
+- `/kinect/rgb/image_raw` – Passthrough
+- `/kinect/rgb/image_annotated` – RGB with overlay
+- `/kinect/rgb/fps` – Measured frame rate
+
+**Parameters:**
+- `publish_rate: 30.0`
+- `frame_id: "kinect_rgb_frame"`
+- `font_scale: 0.7`
+
+**Key Learning:** cv_bridge, OpenCV drawing, exponential moving average for FPS.
+
+---
+
+### Example 02 – Depth Ruler
+
+**File:** `examples/ex02_depth_ruler/depth_ruler_node.py`
+
+Extracts the nearest object distance from a configurable central ROI using the N-th percentile.
+
+**Publishes:**
+- `/kinect/ruler/distance_m` (Float32) – Nearest distance
+- `/kinect/ruler/depth_colormap` – Depth image with ROI rectangle and distance label
+
+**Parameters:**
+- `roi_cx, roi_cy`: Fraction of width/height (default 0.50)
+- `roi_width, roi_height`: ROI size fraction (default 0.20)
+- `percentile: 10.0` – Use 10th percentile (closest 10%)
+
+**Use Case:** Measuring distance to nearest object in front of sensor.
+
+---
+
+### Example 03 – Depth Histogram
+
+**File:** `examples/ex03_depth_histogram/depth_histogram_node.py`
+
+Computes a histogram of depth values and visualizes as a bar chart.
+
+**Publishes:**
+- `/kinect/histogram/image` – ASCII/visual histogram chart
+- `/kinect/histogram/mean_m` – Mean depth across image
+
+**Parameters:**
+- `n_bins: 47`
+- `hist_min: 0.3, hist_max: 5.0` – Range in metres
+
+**Key Learning:** Depth distribution visualization, NumPy histograms.
+
+**QoS Note:** The driver uses `BEST_EFFORT` reliability. Subscribers must match this:
+```python
+qos = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=10)
+self.create_subscription(Image, '/camera/depth/image_meters', callback, qos)
+```
+
+---
+
+### Example 04 – Hand Detector
+
+**File:** `examples/ex04_hand_detector/hand_detector_node.py`
+
+Binary threshold on depth (pixels closer than threshold become white), finds largest blob, computes centroid and mean distance.
+
+**Publishes:**
+- `/kinect/hand/detected` (Bool) – True if blob found above size threshold
+- `/kinect/hand/centroid_x, /kinect/hand/centroid_y` (Float32) – Pixel coordinates
+- `/kinect/hand/distance_m` (Float32) – Mean depth of blob
+- `/kinect/hand/image_overlay` (Image) – Depth colormap with green mask, bounding box, crosshair
+
+**Parameters:**
+- `near_threshold_m: 0.80` – Objects closer than this are "hand"
+- `min_blob_area_px: 500` – Minimum pixels to detect
+
+**Use Case:** Simple hand proximity detection without machine learning.
+
+---
+
+### Example 05 – Coloured Point Cloud
+
+**File:** `examples/ex05_coloured_cloud/coloured_cloud_node.py`
+
+Fuses RGB and depth using `message_filters.ApproximateTimeSynchronizer`. Back-projects depth to 3D points and packs RGB into float32.
+
+**Publishes:**
+- `/kinect/depth/points_colored` (PointCloud2) – XYZRGB point cloud
+
+**Parameters:**
+- `slop: 0.05` – Sync tolerance (seconds)
+- `skip: 2` – Process every N-th frame to reduce load
+
+**Key Learning:** Sensor fusion, PointCloud2 structure, RGB packing.
+
+**Viewing in RViz2:**
+1. Set Fixed Frame to `kinect_depth_frame`
+2. Add PointCloud2 display
+3. Under display, choose Color Transformer → RGB8
+
+---
+
+### Example 06 – Obstacle Avoidance
+
+**File:** `examples/ex06_obstacle_avoidance/obstacle_avoidance_node.py`
+
+Uses middle vertical band of depth; divides into left, centre, right sectors. State machine determines navigation command.
+
+**States:**
+- `FORWARD` – All clear → publish forward velocity
+- `TURN_LEFT` – Centre/right blocked → rotate left
+- `TURN_RIGHT` – Centre/left blocked → rotate right
+- `STOP` – All sectors blocked
+
+**Publishes:**
+- `/cmd_vel` (Twist) – Navigation command
+- `/kinect/avoidance/state` (String) – Current state
+- `/kinect/avoidance/sector_image` (Image) – Debug visualization
+
+**Testing with turtlesim:**
+```bash
+ros2 run turtlesim turtlesim_node &
+ros2 run kinect_ros2 ex06_obstacle_avoidance
+# Move hand in front of Kinect; turtle reacts
+```
+
+**Parameters:**
+- `danger_distance_m: 0.80`
+- `linear_speed: 0.20, angular_speed: 0.40`
+- `sector_overlap: 0.10`
 
 ## System Requirements & Hardware Specifications
 
@@ -449,6 +675,79 @@ The supplied `config/kinect.rviz` configuration file includes:
 - Proximity alert state indication
 - Frame rate diagnostics (typically 25–30 Hz for RGB/depth)
 
+---
+
+## Launch Files for v2 Examples
+
+### kinect_all_examples.launch.py (NEW in v2)
+
+**Location:** `launch/kinect_all_examples.launch.py`
+
+Orchestrates the complete v2 experience: launches the driver and all six example nodes with staggered delays to prevent CPU spikes.
+
+**Usage:**
+```bash
+ros2 launch kinect_ros2 kinect_all_examples.launch.py
+ros2 launch kinect_ros2 kinect_all_examples.launch.py publish_rate:=30.0 tilt_angle:=0.0
+```
+
+**Startup Sequence:**
+1. Driver starts immediately (t=0s)
+2. Examples start with 1.0s delays: ex01 at 1.0s, ex02 at 1.5s, ..., ex06 at 3.5s
+3. Uses `TimerAction` for coordinated timing
+
+---
+
+### examples_params.yaml (NEW in v2)
+
+**Location:** `config/examples_params.yaml`
+
+Centralized parameter configuration for all six example nodes. Loaded automatically by launch files.
+
+**Contents:**
+```yaml
+rgb_viewer_node:
+  ros__parameters:
+    publish_rate: 30.0
+    frame_id: "kinect_rgb_frame"
+    font_scale: 0.7
+
+depth_ruler_node:
+  ros__parameters:
+    roi_cx: 0.50
+    roi_cy: 0.50
+    roi_width: 0.20
+    roi_height: 0.20
+    percentile: 10.0
+    frame_id: "kinect_depth_frame"
+
+depth_histogram_node:
+  ros__parameters:
+    n_bins: 47
+    hist_min: 0.3
+    hist_max: 5.0
+
+hand_detector_node:
+  ros__parameters:
+    near_threshold_m: 0.80
+    min_blob_area_px: 500
+    frame_id: "kinect_depth_frame"
+
+coloured_cloud_node:
+  ros__parameters:
+    frame_id: "kinect_depth_frame"
+    slop: 0.05
+    skip: 2
+
+obstacle_avoidance_node:
+  ros__parameters:
+    danger_distance_m: 0.80
+    linear_speed: 0.20
+    angular_speed: 0.40
+    sector_overlap: 0.10
+    frame_id: "kinect_depth_frame"
+```
+
 ## Nodes, Topics & Message Interface Specification
 
 ### kinect_driver_node – Primary Optical Data Acquisition
@@ -718,6 +1017,12 @@ kinect_ros2/
 │   │   ├── Parameter management & validation
 │   │   └── Error recovery logic
 │   │
+│   ├── kinect_device.py                  # NEW: Context manager API (v2)
+│   │   ├── Device opening/closing protocol
+│   │   ├── LED control & tilt motor interface
+│   │   ├── Synchronous frame polling (video, depth, accel)
+│   │   └── Safe cleanup on exit
+│   │
 │   ├── depth_alert_node.py               # Spatial analysis node
 │   │   ├── Depth map subscription & buffering
 │   │   ├── ROI computation & filtering
@@ -731,62 +1036,99 @@ kinect_ros2/
 │   │   ├── Accelerometer telemetry
 │   │   └── Hardware state caching
 │   │
-│   └── depth_utils.py                    # Shared utility module
-│       ├── Depth conversion functions (disparity → meters)
-│       ├── ROI extraction helpers
-│       ├── Coordinate transformation utilities
-│       ├── Validation functions (bounds checking)
-│       └── NumPy-backed numerical operations
+│   ├── depth_utils.py                    # Shared utility module
+│   │   ├── Depth conversion functions (disparity → meters)
+│   │   ├── ROI extraction helpers
+│   │   ├── Coordinate transformation utilities
+│   │   ├── Validation functions (bounds checking)
+│   │   └── NumPy-backed numerical operations
+│   │
+│   └── examples/                         # NEW: Six example nodes (v2)
+│       ├── __init__.py
+│       ├── ex01_rgb_viewer/
+│       │   ├── __init__.py
+│       │   ├── rgb_viewer_node.py        # RGB annotation & FPS overlay
+│       │   └── launch_rgb_viewer.launch.py
+│       ├── ex02_depth_ruler/
+│       │   ├── __init__.py
+│       │   ├── depth_ruler_node.py       # Distance measurement (percentile-based)
+│       │   └── launch_depth_ruler.launch.py
+│       ├── ex03_depth_histogram/
+│       │   ├── __init__.py
+│       │   ├── depth_histogram_node.py   # Depth distribution visualization
+│       │   └── launch_depth_histogram.launch.py
+│       ├── ex04_hand_detector/
+│       │   ├── __init__.py
+│       │   ├── hand_detector_node.py     # Blob detection & proximity alert
+│       │   └── launch_hand_detector.launch.py
+│       ├── ex05_coloured_cloud/
+│       │   ├── __init__.py
+│       │   ├── coloured_cloud_node.py    # Sensor fusion (RGB + depth→XYZRGB)
+│       │   └── launch_coloured_cloud.launch.py
+│       └── ex06_obstacle_avoidance/
+│           ├── __init__.py
+│           ├── obstacle_avoidance_node.py # State machine navigation
+│           └── launch_obstacle_avoidance.launch.py
 │
 ├── config/                               # Configuration files
-│   ├── kinect_params.yaml                # Parameter definitions (YAML)
-│   │   ├── Driver parameters (target_fps, device_index, …)
-│   │   ├── Camera intrinsics (fx, fy, cx, cy for RGB & depth)
-│   │   ├── Alert thresholds (danger_distance_m, warning_distance_m, …)
-│   │   └── Motor/IMU publication rates
-│   │
+│   ├── kinect_params.yaml                # Driver parameters
+│   ├── examples_params.yaml              # NEW: Parameters for all examples (v2)
 │   └── kinect.rviz                       # RViz 2 configuration
-│       ├── Image display panels (RGB, depth)
-│       ├── Frame rate diagnostics
-│       ├── TF tree visualization
-│       └── Color mapping schemes (for depth visualization)
 │
 ├── launch/                               # ROS 2 launch definitions
 │   ├── kinect.launch.py                  # Minimal deployment (driver only)
 │   ├── kinect_full.launch.py             # Multi-node deployment
-│   └── kinect_rviz.launch.py             # Full stack + visualization
+│   ├── kinect_rviz.launch.py             # Full stack + visualization
+│   └── kinect_all_examples.launch.py     # NEW: All examples + driver (v2)
 │
 ├── resource/                             # Package metadata
 │   └── kinect_ros2                       # Index resource (ament_index marker)
 │
-├── test/                                 # Test suite
+├── test/                                 # Test suite (v2 expanded)
 │   ├── test_copyright.py                 # License header validation
 │   ├── test_flake8.py                    # PEP 8 style checking
-│   └── test_pep257.py                    # Docstring format validation
+│   ├── test_pep257.py                    # Docstring format validation
+│   ├── test_kinect_utils.py              # NEW: depth_utils unit tests
+│   ├── test_camera_info.py               # NEW: Camera intrinsics validation
+│   ├── test_device_api.py                # NEW: KinectDevice context tests
+│   ├── test_depth_alert_params.py        # NEW: Alert node parameter tests
+│   └── test_integration_topics.py        # NEW: ROS 2 topic integration tests
 │
 ├── package.xml                           # ROS 2 package metadata (dependencies, description)
 ├── setup.py                              # Python setuptools configuration (entry points)
 ├── setup.cfg                             # Setuptools supplementary configuration
 └── LICENSE                               # Apache 2.0 license text
-
 ```
 
-**Module Dependencies:**
+**Module Dependencies (Core Nodes):**
 ```
 kinect_driver_node ←─ depth_utils (calibration constants, conversion)
 depth_alert_node ←─ depth_utils (ROI computation, filtering)
 tilt_control_node ←─ (no internal dependencies)
 ```
 
+**v2 Example Dependencies:**
+```
+ex01_rgb_viewer ←─ cv_bridge, opencv
+ex02_depth_ruler ←─ depth_utils
+ex03_depth_histogram ←─ opencv, numpy
+ex04_hand_detector ←─ opencv, scipy (connected components)
+ex05_coloured_cloud ←─ message_filters (time synchronization)
+ex06_obstacle_avoidance ←─ numpy (sector analysis)
+```
+
 **External Dependencies Graph:**
 ```
 rclpy ─────────────────→ ROS 2 node lifecycle & communication
-sensor_msgs ───────────→ Image, CameraInfo message definitions
-std_msgs ──────────────→ Float32, String message types
-geometry_msgs ─────────→ Vector3 (accelerometer data)
+sensor_msgs ───────────→ Image, CameraInfo, PointCloud2
+std_msgs ──────────────→ Float32, String, Bool message types
+geometry_msgs ─────────→ Vector3 (accelerometer), Twist (velocities)
 cv_bridge ─────────────→ OpenCV ↔ ROS 2 Image bridge
+message_filters ───────→ Time synchronization (ex05)
 freenect ──────────────→ libfreenect Python bindings (hardware)
-numpy ─────────────────→ Efficient tensor operations (depth processing)
+numpy ─────────────────→ Efficient tensor operations
+opencv-python ────────→ Image processing (example nodes)
+scipy ─────────────────→ Connected components labeling (ex04)
 ```
 
 ### Depth Calibration Constants
@@ -826,6 +1168,89 @@ print(f"C1={popt[0]}, C2={popt[1]}")
 ### RGB Camera Intrinsics Refinement
 
 Use the ROS 2 `camera_calibration` package to compute or refine intrinsic parameters (fx, fy, cx, cy) via chessboard-based calibration.
+
+---
+
+## Running the v2 Examples
+
+### Prerequisites
+
+- Ubuntu 24.04 with ROS2 Jazzy
+- libfreenect installed (`sudo apt install libfreenect-dev`)
+- Python packages: `opencv-python`, `numpy`, `cv-bridge`, `rclpy`, `message-filters`
+- Kinect Xbox 360 connected with permissions set
+- Run `colcon build --packages-select kinect_ros2 --symlink-install` to build
+
+### Build the Package
+
+```bash
+cd ~/freenect_ros2
+colcon build --packages-select kinect_ros2 --symlink-install
+source install/setup.bash
+```
+
+### Launch Everything at Once
+
+```bash
+ros2 launch kinect_ros2 kinect_all_examples.launch.py
+```
+
+After 3-4 seconds, all nodes will be active. You can then:
+
+**View the annotated RGB stream:**
+```bash
+ros2 run rqt_image_view rqt_image_view
+# Select /kinect/rgb/image_annotated
+```
+
+**See the depth ruler distance:**
+```bash
+ros2 topic echo /kinect/ruler/distance_m
+```
+
+**Watch the histogram chart:**
+```bash
+ros2 run rqt_image_view rqt_image_view
+# Select /kinect/histogram/image
+```
+
+**Monitor hand detections:**
+```bash
+ros2 topic echo /kinect/hand/detected
+```
+
+**Visualize the coloured point cloud in RViz2:**
+```bash
+rviz2
+# Set Fixed Frame to kinect_depth_frame
+# Add PointCloud2 display for /kinect/depth/points_colored
+# Under display, choose Color Transformer → RGB8
+```
+
+**Observe obstacle avoidance state:**
+```bash
+ros2 topic echo /kinect/avoidance/state
+```
+
+### Run Individual Examples
+
+Each example can be launched alone (with the driver already running in another terminal):
+
+```bash
+# Terminal 1: Start the driver
+ros2 run kinect_ros2 kinect_driver
+
+# Terminal 2: Run a specific example
+ros2 run kinect_ros2 ex01_rgb_viewer
+# or ex02_depth_ruler, ex03_depth_histogram, ex04_hand_detector, etc.
+```
+
+**Using individual launch files:**
+```bash
+ros2 launch kinect_ros2 examples/ex01_rgb_viewer/launch_rgb_viewer.launch.py
+ros2 launch kinect_ros2 examples/ex02_depth_ruler/launch_depth_ruler.launch.py
+# etc.
+```
 
 ---
 
@@ -869,6 +1294,18 @@ This section provides systematic diagnosis and resolution for common issues enco
 | `cv_bridge.CvBridgeError` when using depth images | OpenCV encoding mismatch or missing cv_bridge dependency | Verify cv_bridge installed: `python3 -c "import cv_bridge"`; ensure ROS 2 dependency: `apt list --installed \| grep ros-.*-cv-bridge` |
 | Launch file not found | Installation incomplete or colcon build had errors | Rebuild package: `colcon build --packages-select kinect_ros2`; verify installation: `ros2 launch kinect_ros2 --help` |
 | ROS 2 DDS discovery issues (nodes cannot communicate) | Middleware configuration or network isolation | Verify DDS works: `ros2 node list` (should show available nodes); check for network partitioning: `ROS_DOMAIN_ID=0 ros2 topic list`; examine DDS configuration in `~/.ros/fastdds_` |
+
+### v2 Example Nodes (Troubleshooting)
+
+| Symptom | Diagnosis | Resolution |
+| :--- | :--- | :--- |
+| `LIBUSB_ERROR_BUSY` when running examples | Two nodes accessing the Kinect USB device simultaneously | Ensure only `kinect_driver_node` uses the hardware. Verify all examples subscribe to topics, not direct device access. |
+| `No module named 'kinect_ros2.examples...'` | Missing `__init__.py` in example subfolder or setup.py entry points not built | Run `touch kinect_ros2/examples/exXX/__init__.py`; verify console_scripts in setup.py; rebuild: `colcon build --packages-select kinect_ros2` |
+| Example node starts but publishes nothing | Driver not running or driver not publishing expected topics | First, start the driver in a separate terminal: `ros2 run kinect_ros2 kinect_driver`; check that driver topics exist: `ros2 topic list \| grep camera` |
+| QoS mismatch warnings from example nodes | Driver uses `BEST_EFFORT` QoS, but subscriber uses default `RELIABLE` | Examples should declare: `qos = QoSProfile(reliability=ReliabilityPolicy.BEST_EFFORT, depth=10)` in subscription calls. |
+| Hand detector never triggers | Threshold too low, object too far, or no depth data | Test with `ros2 topic echo /camera/depth/image_meters` to see if depth data arrives. Adjust parameter: `ros2 param set /hand_detector_node near_threshold_m 1.0` |
+| Coloured point cloud empty in RViz2 | Time sync failure between depth and RGB, or wrong fixed frame | Increase `slop` parameter in coloured_cloud_node (default 0.05 seconds). Verify fixed frame is `kinect_depth_frame`. Check Color Transformer is set to RGB8. |
+| Obstacle avoidance state never changes from STOP | Depth values all `inf` (invalid) or all zeros | Verify `/camera/depth/image_meters` is actively publishing: `ros2 topic hz /camera/depth/image_meters`. Adjust danger_distance_m if using turtlesim. |
 
 ### Hardware Limits & Behavior
 
@@ -1256,3 +1693,76 @@ If applicable, include images or RViz snapshots
 - Depth filtering and smoothing options
 - Dynamic parameter reconfiguration service
 - Multi-Kinect orchestration framework
+
+### Version 2.0.0 (Learning Platform Release)
+
+**Major Features:**
+- ✅ **Six Example Nodes:** Complete reference implementations for common tasks
+  - RGB annotation & FPS overlay (Ex01)
+  - Distance measurement via percentile (Ex02)
+  - Depth distribution histogram (Ex03)
+  - Hand/blob detection (Ex04)
+  - Sensor fusion (RGB + depth → XYZRGB point cloud) (Ex05)
+  - Obstacle avoidance state machine (Ex06)
+- ✅ **KinectDevice Context Manager:** Clean Python API for direct hardware access
+- ✅ **Centralized Parameters:** `examples_params.yaml` for consistent configuration
+- ✅ **Enhanced Launch Orchestration:** Staggered node startup to prevent CPU spikes
+- ✅ **Automated Test Suite:** Unit and integration tests for core functionality
+- ✅ **Improved Documentation:** Per-node descriptions, launch file details, troubleshooting
+
+**New Dependencies:**
+- `cv_bridge` (for RGB annotation)
+- `message_filters` (for time synchronization in sensor fusion)
+- `scipy` (for connected components in hand detection)
+- `opencv-python` (for example node image processing)
+
+**Breaking Changes:**
+- None. v2 is fully backward-compatible with v1. Existing v1 nodes continue to work.
+
+**Deprecations:**
+- None.
+
+**Known Issues:**
+- Coloured point cloud sync may drop frames if depth and RGB arrive with >50ms skew
+- Hand detector sensitive to lighting conditions; may require threshold tuning
+
+**Contributors:**
+- Community contributions for example nodes and documentation enhancements
+
+---
+
+## Conclusion & Next Steps
+
+**kinect_ros2 v2.0** establishes a comprehensive learning and prototyping platform for Kinect-based robotics projects. The six example nodes provide working code patterns for:
+
+1. **Real-time visualization** (RGB annotation, histograms)
+2. **Distance measurement** (percentile-based proximity)
+3. **Blob detection** (hand proximity without ML)
+4. **Sensor fusion** (RGB-D point cloud registration)
+5. **Reactive control** (state machine navigation)
+
+### For Users
+
+- **Start Small:** Run individual examples with `ros2 run` to understand core patterns
+- **Customize:** Modify example nodes to suit your use case
+- **Integrate:** Subscribe to driver topics from your own nodes
+- **Report Issues:** Use GitHub issues for bugs and feature requests
+
+### For Contributors
+
+We welcome contributions:
+- **Example Nodes:** Submit new examples showcasing Kinect + robotics tasks
+- **Documentation:** Enhance guides, add tutorials, clarify APIs
+- **Performance:** Optimize computation paths, reduce latency
+- **Testing:** Expand test coverage, validate edge cases
+- **Ports:** Support additional ROS 2 distributions or hardware variants
+
+**Contribution Process:** Fork → feature branch → local test → pull request (see Contributing Guidelines above)
+
+### Vision
+
+kinect_ros2 aims to be the reference implementation for Kinect v1 in ROS 2, bridging legacy hardware with modern robotics software. The example-driven approach lowers barriers to entry for students, researchers, and hobbyists exploring computer vision and mobile robotics.
+
+---
+
+**Thank you for using kinect_ros2!** 🎉
