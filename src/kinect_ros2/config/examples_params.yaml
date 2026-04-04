@@ -1,0 +1,44 @@
+# examples_params.yaml
+# Shared parameters for all v2 example nodes.
+
+rgb_viewer_node:
+  ros__parameters:
+    publish_rate: 30.0
+    device_index: 0
+    frame_id: "kinect_rgb_frame"
+    font_scale: 0.7
+
+depth_ruler_node:
+  ros__parameters:
+    roi_cx: 0.50
+    roi_cy: 0.50
+    roi_width: 0.20
+    roi_height: 0.20
+    percentile: 10.0
+    frame_id: "kinect_depth_frame"
+
+depth_histogram_node:
+  ros__parameters:
+    n_bins: 47
+    hist_min: 0.3
+    hist_max: 5.0
+
+hand_detector_node:
+  ros__parameters:
+    near_threshold_m: 0.80
+    min_blob_area_px: 500
+    frame_id: "kinect_depth_frame"
+
+coloured_cloud_node:
+  ros__parameters:
+    frame_id: "kinect_depth_frame"
+    slop: 0.05
+    skip: 2
+
+obstacle_avoidance_node:
+  ros__parameters:
+    danger_distance_m: 0.80
+    linear_speed: 0.20
+    angular_speed: 0.40
+    sector_overlap: 0.10
+    frame_id: "kinect_depth_frame"
