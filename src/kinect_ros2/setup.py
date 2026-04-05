@@ -35,6 +35,7 @@ setup(
             'ex04_hand_detector = kinect_ros2.examples.ex04_hand_detector.hand_detector_node:main',
             'ex05_coloured_cloud = kinect_ros2.examples.ex05_coloured_cloud.coloured_cloud_node:main',
             'ex06_obstacle_avoidance = kinect_ros2.examples.ex06_obstacle_avoidance.obstacle_avoidance_node:main',
+            'ex07_accel_monitor = kinect_ros2.examples.ex07_accel_monitor.accel_monitor_node:main',
         ],
     },
 )
