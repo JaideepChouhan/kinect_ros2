@@ -5,7 +5,7 @@ import time
 import rclpy
 from rclpy.node import Node
 from rclpy.qos import QoSProfile, QoSReliabilityPolicy, QoSHistoryPolicy, QoSDurabilityPolicy
-from sensor_msgs.msg import Image, CameraInfo, Imu
+from sensor_msgs.msg import Image, CameraInfo
 from std_msgs.msg import Header
 from cv_bridge import CvBridge
 
@@ -33,14 +33,13 @@ class KinectDriverNode(Node):
             self.get_logger().fatal('freenect Python module not found. Install with: pip3 install freenect')
             raise RuntimeError('freenect unavailable')
 
-        # Declare parameters
+        # Declare parameters (no IMU)
         self.declare_parameter('device_index', 0)
         self.declare_parameter('target_fps', 30.0)
         self.declare_parameter('rgb_frame_id', 'camera_rgb_optical_frame')
         self.declare_parameter('depth_frame_id', 'camera_depth_optical_frame')
         self.declare_parameter('publish_rgb', True)
         self.declare_parameter('publish_depth', True)
-        self.declare_parameter('publish_imu', True)
         self.declare_parameter('depth_calib_c1', -0.0030711016)
         self.declare_parameter('depth_calib_c2', 3.3309495161)
         self.declare_parameter('rgb_fx', 525.0)
@@ -60,7 +59,6 @@ class KinectDriverNode(Node):
         self._dep_fid = p('depth_frame_id').value
         self._pub_rgb = p('publish_rgb').value
         self._pub_dep = p('publish_depth').value
-        self._pub_imu = p('publish_imu').value
         self._c1 = p('depth_calib_c1').value
         self._c2 = p('depth_calib_c2').value
 
@@ -75,15 +73,11 @@ class KinectDriverNode(Node):
         self._pub_dep_raw = self.create_publisher(Image, '/camera/depth/image_raw', _SENSOR_QOS)
         self._pub_dep_m = self.create_publisher(Image, '/camera/depth/image_meters', _SENSOR_QOS)
         self._pub_dep_ci = self.create_publisher(CameraInfo, '/camera/depth/camera_info', _SENSOR_QOS)
-        
-        # IMU publisher
-        if self._pub_imu:
-            self._pub_imu_data = self.create_publisher(Imu, '/kinect/imu/data', 10)
 
-        # Timer for main capture
+        # Timer
         self._timer = self.create_timer(1.0 / fps, self._capture)
 
-        self.get_logger().info(f'KinectDriverNode started [device={self._dev}, target={fps:.0f} Hz, IMU={self._pub_imu}]')
+        self.get_logger().info(f'KinectDriverNode started [device={self._dev}, target={fps:.0f} Hz]')
 
     def _build_ci(self, info: dict) -> CameraInfo:
         msg = CameraInfo()
@@ -101,35 +95,8 @@ class KinectDriverNode(Node):
     def _param(self, name):
         return self.get_parameter(name).value
 
-    def _publish_imu(self, stamp):
-        if not self._pub_imu:
-            return
-            
-        try:
-            if hasattr(freenect, 'sync_get_accel'):
-                result = freenect.sync_get_accel(self._dev)
-                self.get_logger().debug(f'sync_get_accel returned: {result}')
-                if result is not None and len(result) == 3:
-                    ax, ay, az = result
-                    # ... create and publish IMU message ...
-                    self._pub_imu_data.publish(imu_msg)
-                    if self._frames % 100 == 0:
-                        self.get_logger().info(f'IMU published: x={ax:.2f} y={ay:.2f} z={az:.2f}')
-                else:
-                    if self._frames % 100 == 0:
-                        self.get_logger().warn('sync_get_accel returned None or invalid')
-            else:
-                if self._frames % 100 == 0:
-                    self.get_logger().warn('sync_get_accel not available')
-        except Exception as e:
-            if self._frames % 100 == 0:
-                self.get_logger().error(f'IMU exception: {e}')
-                
     def _capture(self):
         stamp = self.get_clock().now().to_msg()
-        
-        # Publish IMU data
-        self._publish_imu(stamp)
 
         # RGB
         if self._pub_rgb:
@@ -187,7 +154,9 @@ def main(args=None):
         node.get_logger().info('Shutting down KinectDriverNode.')
     finally:
         node.destroy_node()
-        rclpy.shutdown()
+        # Only shutdown if ROS is still OK (fixes the double shutdown error)
+        if rclpy.ok():
+            rclpy.shutdown()
 
 
 if __name__ == '__main__':
