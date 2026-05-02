@@ -1665,8 +1665,8 @@ If applicable, include images or RViz snapshots
 
 **Maintainer:** jaideepchouhan  
 **Contact:** jaideepchouhan123@gmail.com  
-**Repository:** https://github.com/YOUR_USERNAME/kinect_ros2  
-**Issues:** https://github.com/YOUR_USERNAME/kinect_ros2/issues
+**Repository:** https://github.com/JaideepChouhan/kinect_ros2  
+**Issues:** https://github.com/JaideepChouhan/kinect_ros2/issues
 
 ---
 
