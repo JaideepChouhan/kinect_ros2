@@ -1,0 +1,34 @@
+<?xml version="1.0"?>
+<?xml-model href="http://download.ros.org/schema/package_format3.xsd"
+            schematypens="http://www.w3.org/2001/XMLSchema"?>
+<package format="3">
+  <name>kinect_audio_cpp</name>
+  <version>1.0.0</version>
+  <description>
+    C++ ROS 2 Jazzy driver for the Kinect v1 (Xbox 360) microphone array.
+    Uses the libfreenect C audio API directly (libfreenect_audio.h) to access
+    all four microphones and the hardware noise-cancelled beam-formed channel,
+    bypassing ALSA entirely.
+
+    Published topics:
+      /kinect/audio/raw       (std_msgs/Int32MultiArray)  4-ch interleaved int32
+      /kinect/audio/cancelled (std_msgs/Int16MultiArray)  HW noise-cancelled int16
+      /kinect/audio/info      (std_msgs/String)           JSON metadata
+  </description>
+  <maintainer email="jaideepchouhan123@gmail.com">jaideepchouhan</maintainer>
+  <license>Apache-2.0</license>
+
+  <buildtool_depend>ament_cmake</buildtool_depend>
+
+  <!-- ROS 2 runtime dependencies -->
+  <depend>rclcpp</depend>
+  <depend>std_msgs</depend>
+
+  <!-- System dependency: libfreenect-dev must be installed -->
+  <!-- sudo apt install libfreenect-dev -->
+  <!-- pkg-config key: libfreenect -->
+
+  <export>
+    <build_type>ament_cmake</build_type>
+  </export>
+</package>
