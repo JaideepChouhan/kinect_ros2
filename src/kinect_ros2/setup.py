@@ -27,6 +27,7 @@ setup(
             'kinect_driver = kinect_ros2.kinect_driver_node:main',
             'depth_alert = kinect_ros2.depth_alert_node:main',
             'tilt_control = kinect_ros2.tilt_control_node:main',
+            'kinect_audio = kinect_ros2.kinect_audio_node:main',
 
             # Example nodes (v2)
             'ex01_rgb_viewer = kinect_ros2.examples.ex01_rgb_viewer.rgb_viewer_node:main',
@@ -35,6 +36,8 @@ setup(
             'ex04_hand_detector = kinect_ros2.examples.ex04_hand_detector.hand_detector_node:main',
             'ex05_coloured_cloud = kinect_ros2.examples.ex05_coloured_cloud.coloured_cloud_node:main',
             'ex06_obstacle_avoidance = kinect_ros2.examples.ex06_obstacle_avoidance.obstacle_avoidance_node:main',
+            'ex08_speech_recognition = kinect_ros2.examples.ex08_speech_recognition.speech_recognition_node:main',
+            'ex09_mic_visualizer = kinect_ros2.examples.ex09_mic_visualizer.mic_visualizer_node:main',
         ],
     },
 )
