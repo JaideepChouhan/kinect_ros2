@@ -39,6 +39,7 @@ setup(
             'ex06_obstacle_avoidance = kinect_ros2.examples.ex06_obstacle_avoidance.obstacle_avoidance_node:main',
             'ex08_mic_visualizer = kinect_ros2.examples.ex08_mic_visualizer.mic_visualizer_node:main',
             'ex09_speech_recognition = kinect_ros2.examples.ex09_speech_recognition.speech_recognition_node:main',
+            'ex10_tilt_demo = kinect_ros2.examples.ex10_tilt_demo.ex10_tilt_demo_node:main',
         ],
     },
 )
