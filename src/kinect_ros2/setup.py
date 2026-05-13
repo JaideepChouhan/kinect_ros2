@@ -29,6 +29,7 @@ setup(
             'tilt_control = kinect_ros2.tilt_control_node:main',
             'kinect_audio = kinect_ros2.kinect_audio_node:main',
             'kinect_accel = kinect_ros2.kinect_accel_node:main',
+            'depth_to_laserscan = kinect_ros2.depth_to_laserscan_node:main',
 
             # Example nodes (v2)
             'ex01_rgb_viewer = kinect_ros2.examples.ex01_rgb_viewer.rgb_viewer_node:main',
