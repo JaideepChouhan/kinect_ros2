@@ -1,0 +1,83 @@
+# slam_params.yaml
+# slam_toolbox online async configuration for Kinect v1 robot
+#
+# Kinect-specific notes:
+#   • Horizontal FOV = 57.8° (≈ ±29°) – much narrower than a LiDAR
+#   • Max reliable range = 3.5 m
+#   • scan_topic must match depth_to_laserscan_node output_topic
+#
+# Usage:
+#   Mapping:      mode: mapping
+#   Localisation: mode: localization  (load an existing .posegraph file)
+
+slam_toolbox:
+  ros__parameters:
+
+    # ── Solver ──────────────────────────────────────────────────────────────
+    solver_plugin: solver_plugins::CeresSolver
+    ceres_linear_solver: SPARSE_NORMAL_CHOLESKY
+    ceres_preconditioner: SCHUR_JACOBI
+    ceres_trust_strategy: LEVENBERG_MARQUARDT
+    ceres_dogleg_type: TRADITIONAL_DOGLEG
+    ceres_loss_function: None
+
+    # ── Frames ──────────────────────────────────────────────────────────────
+    odom_frame:   odom
+    map_frame:    map
+    base_frame:   base_footprint    # must match your robot URDF
+    scan_topic:   /scan             # from depth_to_laserscan_node
+
+    # ── Mode ────────────────────────────────────────────────────────────────
+    mode: mapping   # switch to localization after you have a saved map
+
+    # ── Map parameters ───────────────────────────────────────────────────────
+    resolution:         0.05   # m/cell – good for indoor navigation
+    map_update_interval: 5.0   # seconds between map publications
+
+    # ── Scan processing ─────────────────────────────────────────────────────
+    max_laser_range:    3.5    # match depth_to_laserscan range_max
+    throttle_scans:     1      # process every scan (increase if CPU limited)
+    transform_publish_period: 0.02   # 50 Hz TF publishing
+
+    # ── Travel thresholds before new scan is processed ──────────────────────
+    # Set lower than usual because Kinect FOV is narrow –
+    # we need denser scan overlap for good mapping
+    minimum_travel_distance: 0.3   # metres  (default 0.5)
+    minimum_travel_heading:  0.3   # radians (default 0.5)
+
+    # ── Scan buffer ─────────────────────────────────────────────────────────
+    scan_buffer_size: 15
+    scan_buffer_maximum_scan_distance: 8.0
+
+    # ── Loop closure ────────────────────────────────────────────────────────
+    # Kinect's narrow FOV makes loop closure harder; tune conservatively
+    do_loop_closing: true
+    loop_match_minimum_chain_size: 12       # more scans required (narrow FOV)
+    loop_match_maximum_variance_coarse: 3.0
+    loop_match_minimum_response_coarse: 0.35
+    loop_match_minimum_response_fine:   0.45
+    loop_search_maximum_distance: 3.0
+    loop_search_space_dimension: 8.0
+    loop_search_space_resolution: 0.05
+    loop_search_space_smear_deviation: 0.03
+
+    # ── Scan matching ────────────────────────────────────────────────────────
+    link_match_minimum_response_fine: 0.1
+    link_scan_maximum_distance: 1.5
+    correlation_search_space_dimension: 0.5
+    correlation_search_space_resolution: 0.01
+    correlation_search_space_smear_deviation: 0.1
+
+    # ── Angle penalties ──────────────────────────────────────────────────────
+    distance_variance_penalty: 0.5
+    angle_variance_penalty:    1.0
+    fine_search_angle_offset:   0.00349   # 0.2 deg
+    coarse_search_angle_offset: 0.349     # 20 deg
+    coarse_angle_resolution:    0.0349    # 2 deg
+    minimum_angle_penalty:      0.9
+    minimum_distance_penalty:   0.5
+    use_response_expansion:     true
+
+    # ── Map saver ────────────────────────────────────────────────────────────
+    use_map_saver: true
+    debug_logging: false
