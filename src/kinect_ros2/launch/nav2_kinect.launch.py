@@ -110,7 +110,7 @@ def generate_launch_description() -> LaunchDescription:
         executable='kinect_driver',
         name='kinect_driver_node',
         output='screen',
-        parameters=[{'target_fps': 15}],
+        parameters=[{'target_fps': 15.0}],
         arguments=['--ros-args', '--log-level',
                    LaunchConfiguration('log_level')],
     )

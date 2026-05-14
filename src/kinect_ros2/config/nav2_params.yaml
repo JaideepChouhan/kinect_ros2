@@ -281,14 +281,16 @@ collision_monitor:
     stop_publisher: "collision_stop"
     polygons: ["PolygonStop"]
     observation_sources: ["scan"]
-    # Define a stopping polygon around the robot
     PolygonStop:
       type: "polygon"
       action_type: "stop"
-      min_dist: 0.25          # stop if obstacle closer than 25 cm
+      min_dist: 0.25
       visual_debug: false
-      points: [ [0.25, 0.20], [0.25, -0.20], [-0.10, -0.20], [-0.10, 0.20] ]
-    # Scan observation source (your /scan topic)
+      points:
+        - [0.25, 0.20]
+        - [0.25, -0.20]
+        - [-0.10, -0.20]
+        - [-0.10, 0.20]
     scan:
       type: "scan"
       topic: "/scan"
