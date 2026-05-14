@@ -240,11 +240,11 @@ behavior_server:
     cycle_frequency: 10.0
     behavior_plugins: ["spin", "back_up", "wait"]
     spin:
-      plugin: "nav2_behaviors::Spin" #/ to ::
+      plugin: "nav2_behaviors::Spin"
     back_up:
-      plugin: "nav2_behaviors::BackUp" #/ to ::
+      plugin: "nav2_behaviors::BackUp"
     wait:
-      plugin: "nav2_behaviors::Wait" #/ to ::
+      plugin: "nav2_behaviors::Wait"
     global_frame: odom
     robot_base_frame: base_footprint
     transform_tolerance: 0.1

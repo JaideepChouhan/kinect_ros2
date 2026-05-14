@@ -258,7 +258,6 @@ def generate_launch_description() -> LaunchDescription:
         LogInfo(msg='[nav2_kinect] Kinect autonomous navigation starting …'),
         kinect_driver,
         depth_to_scan,
-        tilt_accel,
         *static_tfs,
         slam_mapping,
         nav2,
