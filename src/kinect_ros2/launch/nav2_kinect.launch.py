@@ -216,11 +216,9 @@ def generate_launch_description() -> LaunchDescription:
                 'params_file':  nav2_params_file,
                 'map':          LaunchConfiguration('map'),
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'slam':         __import__('launch.substitutions',
-                                           fromlist=['PythonExpression'])
+                'slam':         __import__('launch.substitutions', fromlist=['PythonExpression'])
                                 .PythonExpression(
-                                    ["'", LaunchConfiguration('mode'),
-                                     "' == 'mapping'"]
+                                    ["'true' if '", LaunchConfiguration('mode'), "' == 'mapping' else 'false'"]
                                 ),
                 'autostart':    'true',
             }.items(),
