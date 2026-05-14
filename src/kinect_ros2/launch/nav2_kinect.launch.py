@@ -68,16 +68,14 @@ from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
 from launch.actions import (
     DeclareLaunchArgument,
-    GroupAction,
     IncludeLaunchDescription,
     LogInfo,
     TimerAction,
 )
-from launch.conditions import IfCondition, UnlessCondition
+from launch.conditions import IfCondition
 from launch.launch_description_sources import PythonLaunchDescriptionSource
-from launch.substitutions import LaunchConfiguration, PathJoinSubstitution
+from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
-from launch_ros.substitutions import FindPackageShare
 
 
 def generate_launch_description() -> LaunchDescription:
@@ -133,17 +131,6 @@ def generate_launch_description() -> LaunchDescription:
         ),
     ])
 
-    # ── t=1: tilt/accel C++ node (1473 compatible) ─────────────────────────
-   # tilt_accel = TimerAction(period=1.5, actions=[
-       # Node(
-      #      package='kinect_audio_cpp',
-     #       executable='kinect_tilt_accel',
-    #        name='kinect_tilt_accel_node',
-   #         output='screen',
-  #          parameters=[{'publish_rate_hz': 10.0}],
- #       ),
-#    ])
-
     # ── Static TF publishers ───────────────────────────────────────────────
     # EDIT these translation values to match where the Kinect is mounted
     # on your robot (x=forward, y=left, z=up, in metres from base_link origin)
@@ -195,8 +182,6 @@ def generate_launch_description() -> LaunchDescription:
                 'use_sim_time':     LaunchConfiguration('use_sim_time'),
             }.items(),
             condition=IfCondition(
-                # Condition: mode == 'mapping'
-                # LaunchConfiguration comparisons need PythonExpression
                 __import__('launch.substitutions', fromlist=['PythonExpression'])
                 .PythonExpression(
                     ["'", LaunchConfiguration('mode'), "' == 'mapping'"]
@@ -205,7 +190,7 @@ def generate_launch_description() -> LaunchDescription:
         ),
     ])
 
-    # ── Nav2 bringup ───────────────────────────────────────────────────────
+    # ── Nav2 bringup (external SLAM, so slam=False) ─────────────────────────
     nav2 = TimerAction(period=3.0, actions=[
         LogInfo(msg='[nav2_kinect] Starting Nav2 …'),
         IncludeLaunchDescription(
@@ -216,10 +201,7 @@ def generate_launch_description() -> LaunchDescription:
                 'params_file':  nav2_params_file,
                 'map':          LaunchConfiguration('map'),
                 'use_sim_time': LaunchConfiguration('use_sim_time'),
-                'slam':         __import__('launch.substitutions', fromlist=['PythonExpression'])
-                                .PythonExpression(
-                                    ["'true' if '", LaunchConfiguration('mode'), "' == 'mapping' else 'false'"]
-                                ),
+                'slam':         'False',      # external SLAM already running
                 'autostart':    'true',
             }.items(),
         ),
@@ -237,10 +219,7 @@ def generate_launch_description() -> LaunchDescription:
         ),
     ])
 
-    # ── DETROIT voice bridge ───────────────────────────────────────────────
-    # Bridges your DETROIT voice command output to /kinect/speech/command
-    # so the ex08 speech node or a custom handler can act on it.
-    # Edit voice_bridge_node.py to match DETROIT's actual interface.
+    # ── DETROIT voice bridge (optional) ────────────────────────────────────
     voice = TimerAction(period=5.0, actions=[
         LogInfo(msg='[nav2_kinect] Starting DETROIT voice bridge …'),
         Node(

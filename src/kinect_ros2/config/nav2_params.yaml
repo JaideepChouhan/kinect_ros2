@@ -265,7 +265,7 @@ smoother_server:
       tolerance: 1.0e-10
       max_its: 1000
       do_refinement: true
-      
+
 # ════════════════════════════════════════════════════════════════════════════
 #  Collision Monitor  – safety stop if obstacle gets too close
 # ════════════════════════════════════════════════════════════════════════════
