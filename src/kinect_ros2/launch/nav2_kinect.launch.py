@@ -133,15 +133,15 @@ def generate_launch_description() -> LaunchDescription:
     ])
 
     # ── t=1: tilt/accel C++ node (1473 compatible) ─────────────────────────
-    tilt_accel = TimerAction(period=1.5, actions=[
-        Node(
-            package='kinect_audio_cpp',
-            executable='kinect_tilt_accel',
-            name='kinect_tilt_accel_node',
-            output='screen',
-            parameters=[{'publish_rate_hz': 10.0}],
-        ),
-    ])
+   # tilt_accel = TimerAction(period=1.5, actions=[
+       # Node(
+      #      package='kinect_audio_cpp',
+     #       executable='kinect_tilt_accel',
+    #        name='kinect_tilt_accel_node',
+   #         output='screen',
+  #          parameters=[{'publish_rate_hz': 10.0}],
+ #       ),
+#    ])
 
     # ── Static TF publishers ───────────────────────────────────────────────
     # EDIT these translation values to match where the Kinect is mounted
