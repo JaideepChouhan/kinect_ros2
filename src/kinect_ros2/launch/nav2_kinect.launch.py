@@ -183,10 +183,8 @@ def generate_launch_description() -> LaunchDescription:
             }.items(),
             condition=IfCondition(
                 __import__('launch.substitutions', fromlist=['PythonExpression'])
-                .PythonExpression(
-                    ["'", LaunchConfiguration('mode'), "' == 'mapping'"]
-                )
-            ),
+                .PythonExpression(["'true' if '", LaunchConfiguration('mode'), "' == 'mapping' else 'false'"])
+            )
         ),
     ])
 
