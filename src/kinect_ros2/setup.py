@@ -35,7 +35,7 @@ setup(
             # ── Navigation helpers (v2.1) ─────────────────────────────────────
             # fake_odom: static odometry for bench-testing without real encoders.
             # Remove/disable once your Arduino publishes real /odom.
-            'fake_odom          = kinect_ros2.fake_odom_node:main',
+            'fake_odom = kinect_ros2.fake_odom_node:main',
 
             # ── Waiter robot mission controller (v2.1) ───────────────────────
             'waiter_robot       = kinect_ros2.waiter_robot_node:main',

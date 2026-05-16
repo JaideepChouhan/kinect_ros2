@@ -199,7 +199,7 @@ def generate_launch_description() -> LaunchDescription:
     # REMOVE or set fake_odom:=false when your Arduino publishes real /odom.
     fake_odom_node = Node(
         package='kinect_ros2',
-        executable='fake_odom_node',
+        executable='fake_odom',
         name='fake_odom_node',
         output='screen',
         condition=IfCondition(LaunchConfiguration('fake_odom')),
