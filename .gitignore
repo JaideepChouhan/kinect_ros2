@@ -17,3 +17,7 @@ __pycache__/
 
 # Virtual Enviroment
 *.venv
+
+# hide robot code
+waiter_robot_node.py
+
