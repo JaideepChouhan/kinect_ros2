@@ -1,23 +1,61 @@
+# kinect_params.yaml
+# Parameters for kinect_driver_node (v2.2)
+#
+# /scan is now published directly by kinect_driver_node.
+# No separate depth_to_laserscan node is needed.
+
 kinect_driver_node:
   ros__parameters:
-    device_index:         0
-    target_fps:           30.0
-    rgb_frame_id:         "camera_rgb_optical_frame"
-    depth_frame_id:       "camera_depth_optical_frame"
-    publish_rgb:          true
-    publish_depth:        true
-    publish_point_cloud:  false
-    depth_calib_c1:   -0.0030711016
-    depth_calib_c2:    3.3309495161
+
+    # ── Device ─────────────────────────────────────────────────────────────
+    device_index:   0
+    target_fps:     30.0
+
+    # ── Frame IDs ──────────────────────────────────────────────────────────
+    rgb_frame_id:   "camera_rgb_optical_frame"
+    depth_frame_id: "camera_depth_optical_frame"
+
+    # ── What to publish ────────────────────────────────────────────────────
+    publish_rgb:   true
+    publish_depth: true
+
+    # ── Depth calibration (Kinect v1 standard values) ──────────────────────
+    depth_calib_c1: -0.0030711016
+    depth_calib_c2:  3.3309495161
+
+    # ── Camera intrinsics ──────────────────────────────────────────────────
     rgb_fx: 525.0
     rgb_fy: 525.0
     rgb_cx: 319.5
     rgb_cy: 239.5
+
     depth_fx: 580.0
     depth_fy: 580.0
     depth_cx: 319.5
     depth_cy: 239.5
 
+    # ── LaserScan (built-in – no extra node needed) ────────────────────────
+    # Set publish_scan: false to disable /scan completely.
+    publish_scan:   true
+    scan_topic:     "/scan"
+
+    # Number of central depth rows to sample.
+    # 20 rows = fast, good for flat-floor robots (table-top height).
+    # Increase to 40-60 if your Kinect is mounted high and you want to
+    # catch obstacles at multiple heights.
+    scan_height:    20
+
+    # Kinect hardware minimum is ~0.4 m (closer readings are invalid).
+    scan_range_min: 0.40
+
+    # Kinect reliable maximum is ~3.5 m (beyond this depth noise spikes).
+    scan_range_max: 3.50
+
+    # true  = minimum depth per column (nearest obstacle – RECOMMENDED)
+    # false = mean depth per column
+    scan_use_min:   true
+
+# ── depth_alert_node ──────────────────────────────────────────────────────────
 depth_alert_node:
   ros__parameters:
     danger_distance_m:    0.80
@@ -26,6 +64,7 @@ depth_alert_node:
     alert_topic:          "/kinect/proximity_alert"
     roi_fraction:         0.5
 
+# ── tilt_control_node ────────────────────────────────────────────────────────
 tilt_control_node:
   ros__parameters:
     publish_rate_hz: 5.0
