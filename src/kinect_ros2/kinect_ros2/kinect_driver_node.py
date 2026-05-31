@@ -252,10 +252,16 @@ class KinectDriverNode(Node):
         roi[bad] = np.nan
 
         # Column reduction
-        if self._use_min:
-            ranges = np.nanmin(roi, axis=0)
-        else:
-            ranges = np.nanmean(roi, axis=0)
+        # np.errstate suppresses the "All-NaN slice" RuntimeWarning that numpy
+        # emits when an entire column is masked (e.g. a reflective surface or
+        # a depth hole spans the full scan_height band).  The result for that
+        # column is NaN, which we correctly convert to inf below – so the
+        # warning is expected and harmless; we just don't want it in the log.
+        with np.errstate(all='ignore'):
+            if self._use_min:
+                ranges = np.nanmin(roi, axis=0)
+            else:
+                ranges = np.nanmean(roi, axis=0)
 
         # NaN → inf  (no obstacle detected in this direction)
         ranges = np.where(np.isnan(ranges), np.inf, ranges).astype(np.float32)
@@ -359,7 +365,10 @@ def main(args=None):
     try:
         rclpy.spin(node)
     except KeyboardInterrupt:
-        node.get_logger().info('Shutting down KinectDriverNode.')
+        # Use print here, not get_logger().  After Ctrl+C the ROS context
+        # begins shutting down before this line runs, so any logger call
+        # produces "Failed to publish log message to rosout" on stderr.
+        print('[kinect_driver_node] Shutting down (KeyboardInterrupt).')
     finally:
         node.destroy_node()
         if rclpy.ok():
