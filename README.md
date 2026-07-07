@@ -25,10 +25,10 @@ Everything below was captured from `rqt` and RViz while the full node graph was 
 | ![Hand detector depth overlay](docs/screenshots/hand_detection.png) | ![Object tracking feature](docs/screenshots/object_tracking.png) |
 | Blob mask + centroid on depth | Tracked target across frames |
 
-| 4-Channel Mic Array (Raw) | Final Filtered Audio (Merged) |
-|:---:|:---:|
-| ![All four mic array channels](docs/screenshots/mic_array_raw.png) | ![Filtered, merged audio signal](docs/screenshots/mic_array_raw.png) |
-| Individual waveform per microphone | Beamformed / filtered output, all channels combined into one trace |
+| 4-Channel Mic Array (Raw) |
+|:---:|
+| ![All four mic array channels](docs/screenshots/mic_array_raw.png) |
+| Individual waveform per microphone |
 
 > Drop your own screenshots into `docs/screenshots/` using the filenames above and this table will render them automatically on GitHub.
 
