@@ -27,14 +27,14 @@ Everything below was captured from `rqt` and RViz while the full node graph was 
 
 | 4-Channel Mic Array (Raw) | Final Filtered Audio (Merged) |
 |:---:|:---:|
-| ![All four mic array channels](docs/screenshots/mic_array_raw.png) | ![Filtered, merged audio signal](docs/screenshots/mic_array_filtered.png) |
+| ![All four mic array channels](docs/screenshots/mic_array_raw.png) | ![Filtered, merged audio signal](docs/screenshots/mic_array_raw.png) |
 | Individual waveform per microphone | Beamformed / filtered output, all channels combined into one trace |
 
 > Drop your own screenshots into `docs/screenshots/` using the filenames above and this table will render them automatically on GitHub.
 
 ### System Node Graph (rqt_graph, all nodes running)
 
-![kinect_ros2 rqt node graph](docs/images/rqt_graph.svg)
+![kinect_ros2 rqt node graph](docs/rqt_graph.svg)
 
 This is the actual `rqt_graph` output with the driver, vision examples, audio pipeline, and navigation stack all spun up together — the real topology behind the tables below.
 
